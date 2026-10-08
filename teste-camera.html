@@ -1,72 +1,71 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Teste de câmera</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Câmera + Cubo 3D</title>
 
     <style>
-
-        body {
+        html, body {
             margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             background: black;
         }
 
-        video {
-            width: 100vw;
-            height: 100vh;
+        #camera {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
+            z-index: 0;
         }
 
-        #mensagem {
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #status {
             position: fixed;
             top: 20px;
             left: 20px;
             right: 20px;
-
             padding: 15px;
-
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.75);
             color: white;
-
-            font-family: sans-serif;
-            text-align: center;
-
+            font-family: Arial, sans-serif;
             border-radius: 10px;
+            z-index: 10;
         }
-
     </style>
-
 </head>
 
 <body>
 
-    <video
-        id="camera"
-        autoplay
-        playsinline
-    ></video>
+    <div id="status">Iniciando câmera...</div>
 
-    <div id="mensagem">
-        Pedindo acesso à câmera...
-    </div>
+    <video id="camera" autoplay playsinline></video>
 
-    <script>
+    <script type="module">
 
-        const video =
-            document.getElementById("camera");
+        import * as THREE from
+        "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
-        const mensagem =
-            document.getElementById("mensagem");
+        const video = document.getElementById("camera");
+        const status = document.getElementById("status");
 
+        // =========================
+        // CÂMERA
+        // =========================
 
         async function iniciarCamera() {
 
@@ -77,19 +76,22 @@
                         video: {
                             facingMode: "environment"
                         },
-
                         audio: false
                     });
 
                 video.srcObject = stream;
 
-                mensagem.textContent =
-                    "Câmera funcionando 📷";
+                status.textContent = "Câmera funcionando! 📷";
+
+                setTimeout(() => {
+                    status.style.display = "none";
+                }, 2000);
 
             } catch (erro) {
 
-                mensagem.textContent =
-                    "Não consegui acessar a câmera: " +
+                status.innerHTML =
+                    "ERRO NA CÂMERA:<br><br>" +
+                    erro.name + "<br>" +
                     erro.message;
 
             }
@@ -98,8 +100,116 @@
 
         iniciarCamera();
 
+
+        // =========================
+        // THREE.JS
+        // =========================
+
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(
+            70,
+            window.innerWidth / window.innerHeight,
+            0.01,
+            100
+        );
+
+        camera.position.z = 5;
+
+
+        const renderer = new THREE.WebGLRenderer({
+            alpha: true,
+            antialias: true
+        });
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        renderer.setPixelRatio(
+            Math.min(window.devicePixelRatio, 2)
+        );
+
+        document.body.appendChild(renderer.domElement);
+
+
+        // =========================
+        // CUBO
+        // =========================
+
+        const geometry = new THREE.BoxGeometry(
+            2,
+            2,
+            2
+        );
+
+        const material = new THREE.MeshNormalMaterial();
+
+        const cube = new THREE.Mesh(
+            geometry,
+            material
+        );
+
+        scene.add(cube);
+
+
+        // =========================
+        // LUZ
+        // =========================
+
+        const light = new THREE.AmbientLight(
+            0xffffff,
+            2
+        );
+
+        scene.add(light);
+
+
+        // =========================
+        // ANIMAÇÃO
+        // =========================
+
+        function animar() {
+
+            requestAnimationFrame(animar);
+
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.015;
+
+            renderer.render(
+                scene,
+                camera
+            );
+
+        }
+
+        animar();
+
+
+        // =========================
+        // REDIMENSIONAMENTO
+        // =========================
+
+        window.addEventListener(
+            "resize",
+            () => {
+
+                camera.aspect =
+                    window.innerWidth /
+                    window.innerHeight;
+
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(
+                    window.innerWidth,
+                    window.innerHeight
+                );
+
+            }
+        );
+
     </script>
 
 </body>
-
 </html>
