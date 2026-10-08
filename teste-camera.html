@@ -1,20 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste</title>
+    <title>AR Teste</title>
 
     <style>
         body {
             margin: 0;
+            overflow: hidden;
             background: black;
         }
 
-        video {
-            width: 100vw;
-            height: 100vh;
+        #camera {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
+            z-index: 0;
+        }
+
+        #status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            color: white;
+            background: rgba(0,0,0,.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: Arial;
         }
     </style>
 </head>
@@ -23,30 +40,120 @@
 
 <video id="camera" autoplay playsinline></video>
 
-<script>
+<div id="status">
+    Carregando...
+</div>
 
+<script type="module">
+
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+const status = document.getElementById("status");
 const video = document.getElementById("camera");
 
-navigator.mediaDevices.getUserMedia({
-    video: {
-        facingMode: "environment"
-    }
-})
-.then(function(stream) {
+
+// ======================
+// CÂMERA
+// ======================
+
+try {
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+            facingMode: "environment"
+        },
+        audio: false
+    });
 
     video.srcObject = stream;
 
-})
-.catch(function(error) {
+    status.innerText = "Câmera OK. Carregando cubo...";
 
-    document.body.innerHTML =
-        "<h1 style='color:white'>" +
-        error.name +
-        "<br>" +
-        error.message +
-        "</h1>";
+} catch (erro) {
 
+    status.innerText =
+        "Erro da câmera: " +
+        erro.name;
+
+}
+
+
+// ======================
+// THREE.JS
+// ======================
+
+const scene = new THREE.Scene();
+
+const camera3D = new THREE.PerspectiveCamera(
+    70,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    100
+);
+
+camera3D.position.z = 5;
+
+
+const renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true
 });
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.domElement.style.position = "fixed";
+renderer.domElement.style.top = "0";
+renderer.domElement.style.left = "0";
+renderer.domElement.style.zIndex = "1";
+
+document.body.appendChild(renderer.domElement);
+
+
+// ======================
+// CUBO
+// ======================
+
+const geometry = new THREE.BoxGeometry(
+    2,
+    2,
+    2
+);
+
+const material = new THREE.MeshNormalMaterial();
+
+const cube = new THREE.Mesh(
+    geometry,
+    material
+);
+
+scene.add(cube);
+
+
+// ======================
+// ANIMAÇÃO
+// ======================
+
+function animate() {
+
+    requestAnimationFrame(animate);
+
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.015;
+
+    renderer.render(
+        scene,
+        camera3D
+    );
+}
+
+animate();
+
+
+status.innerText = "Câmera + cubo funcionando! 🧊📷";
 
 </script>
 
