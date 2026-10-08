@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Câmera + Cubo 3D</title>
+    <title>Câmera + Cubo</title>
 
     <style>
         html, body {
             margin: 0;
-            padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -17,199 +16,102 @@
 
         #camera {
             position: fixed;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
             z-index: 0;
         }
 
-        canvas {
+        #three {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             z-index: 1;
-        }
-
-        #status {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.75);
-            color: white;
-            font-family: Arial, sans-serif;
-            border-radius: 10px;
-            z-index: 10;
         }
     </style>
 </head>
 
 <body>
 
-    <div id="status">Iniciando câmera...</div>
+<video id="camera" autoplay playsinline></video>
+<canvas id="three"></canvas>
 
-    <video id="camera" autoplay playsinline></video>
+<script type="module">
 
-    <script type="module">
-
-        import * as THREE from
-        "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-
-        const video = document.getElementById("camera");
-        const status = document.getElementById("status");
-
-        // =========================
-        // CÂMERA
-        // =========================
-
-        async function iniciarCamera() {
-
-            try {
-
-                const stream =
-                    await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: "environment"
-                        },
-                        audio: false
-                    });
-
-                video.srcObject = stream;
-
-                status.textContent = "Câmera funcionando! 📷";
-
-                setTimeout(() => {
-                    status.style.display = "none";
-                }, 2000);
-
-            } catch (erro) {
-
-                status.innerHTML =
-                    "ERRO NA CÂMERA:<br><br>" +
-                    erro.name + "<br>" +
-                    erro.message;
-
-            }
-
-        }
-
-        iniciarCamera();
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 
-        // =========================
-        // THREE.JS
-        // =========================
+// CÂMERA
 
-        const scene = new THREE.Scene();
+const video = document.getElementById("camera");
 
-        const camera = new THREE.PerspectiveCamera(
-            70,
-            window.innerWidth / window.innerHeight,
-            0.01,
-            100
-        );
+const stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+        facingMode: "environment"
+    },
+    audio: false
+});
 
-        camera.position.z = 5;
+video.srcObject = stream;
 
 
-        const renderer = new THREE.WebGLRenderer({
-            alpha: true,
-            antialias: true
-        });
+// THREE.JS
 
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
+const canvas = document.getElementById("three");
 
-        renderer.setPixelRatio(
-            Math.min(window.devicePixelRatio, 2)
-        );
+const scene = new THREE.Scene();
 
-        document.body.appendChild(renderer.domElement);
+const camera = new THREE.PerspectiveCamera(
+    70,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    100
+);
 
-
-        // =========================
-        // CUBO
-        // =========================
-
-        const geometry = new THREE.BoxGeometry(
-            2,
-            2,
-            2
-        );
-
-        const material = new THREE.MeshNormalMaterial();
-
-        const cube = new THREE.Mesh(
-            geometry,
-            material
-        );
-
-        scene.add(cube);
+camera.position.z = 5;
 
 
-        // =========================
-        // LUZ
-        // =========================
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true
+});
 
-        const light = new THREE.AmbientLight(
-            0xffffff,
-            2
-        );
-
-        scene.add(light);
-
-
-        // =========================
-        // ANIMAÇÃO
-        // =========================
-
-        function animar() {
-
-            requestAnimationFrame(animar);
-
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.015;
-
-            renderer.render(
-                scene,
-                camera
-            );
-
-        }
-
-        animar();
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
 
 
-        // =========================
-        // REDIMENSIONAMENTO
-        // =========================
+// CUBO
 
-        window.addEventListener(
-            "resize",
-            () => {
+const geometry = new THREE.BoxGeometry(2, 2, 2);
 
-                camera.aspect =
-                    window.innerWidth /
-                    window.innerHeight;
+const material = new THREE.MeshNormalMaterial();
 
-                camera.updateProjectionMatrix();
+const cube = new THREE.Mesh(
+    geometry,
+    material
+);
 
-                renderer.setSize(
-                    window.innerWidth,
-                    window.innerHeight
-                );
+scene.add(cube);
 
-            }
-        );
 
-    </script>
+// ANIMAÇÃO
+
+function animate() {
+
+    requestAnimationFrame(animate);
+
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+
+    renderer.render(scene, camera);
+
+}
+
+animate();
+
+</script>
 
 </body>
 </html>
